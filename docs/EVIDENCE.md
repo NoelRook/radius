@@ -94,8 +94,9 @@ rollback** loop with a machine-readable budget:
 - observability tools detect incidents after they reach users.
 
 **Gap G3 — the feedback gap.** Radius treats the canary as the unit of
-autonomy: 25% of traffic, explicit error/latency/spend budgets, and an automatic
-return to the last known-good revision when a budget is breached.
+autonomy: a bounded canary revision (the contract declares a 25% blast-radius
+ceiling), explicit error/latency/spend budgets, and an automatic return to the
+last known-good revision when a budget is breached.
 
 ## 4. The governance gap
 
@@ -145,11 +146,15 @@ rollback; every later pipeline rolls back to the previous published wheel.
 
 - **Production is simulated on the CI runner.** The canary is a real process
   with real traffic, but it is not multi-node or behind a load balancer. The
-  contract and the decision logic are production-shaped; the infrastructure is
-  not.
+  contract declares a 25% blast-radius ceiling; the harness does not route 25% of
+  live traffic because there is no live load balancer. The contract and the
+  decision logic are production-shaped; the infrastructure is not.
 - **The breach sample is 30 requests.** That is enough to cross a 2% error
   budget decisively, but it is not a statistical SLO measurement. A real
   deployment would use a longer window and a proper SLI.
+- **Spend is policy-checked, not metered.** `policy/check.py` denies when a
+  supplied spend value exceeds the cap, but the demo does not attach cloud billing
+  data. The spend budget is enforced at the gate, not observed from a provider.
 - **The flows must be registered in the GitLab UI.** They are versioned here as
   source of truth because GitLab's config-path trigger is behind a disabled
   feature flag. Registration needs Maintainer/Owner; see the runbook.

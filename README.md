@@ -2,11 +2,14 @@
 
 **Agents ship to production. A blast-radius budget decides how far they can go.**
 
+[![pipeline](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/badges/main/pipeline.svg)](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/-/pipelines)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Radius is a nine-stage autonomous delivery loop for GitLab Duo Agent Platform.
 One human creates a work item. From there, agents plan, open a merge request,
-fix CI, pass security gates, merge, deploy a canary, measure it against an
-error/latency/spend budget, and either promote or roll back — with a JSON
-evidence pack for every decision.
+run the nine-stage pipeline, pass security gates, merge, deploy a canary, measure
+it against an error/latency/spend budget, and either promote or roll back — with
+a JSON evidence pack for every decision.
 
 The boundary is not a prompt. It is [`autonomy.yaml`](autonomy.yaml), a
 versioned contract enforced by [`policy/check.py`](policy/check.py) in CI and
