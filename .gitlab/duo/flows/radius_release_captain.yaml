@@ -87,7 +87,7 @@ prompts:
            canary.latency_p95_ms.
 
         8. Post exactly one comment on the merge request with
-           `glab mr note <IID> -m "..."` using this structure:
+           `glab mr note create <IID> -m "..."` using this structure:
 
            ## Radius release gate
 
