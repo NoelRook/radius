@@ -34,7 +34,7 @@ Show `python policy/check.py` output: `Decision: ALLOW`.
 **Voice:** "The pipeline canaries the new revision at 25 percent. Radius injects a
 controlled fault — 60 percent of requests fail. The error budget is two percent."
 
-Show job log lines: `error_rate=0.667`, `policy decision=deny`, `rollback_verified=true`.
+Show job log lines: `error_rate=0.633`, `policy decision=deny`, `rollback_verified=true`.
 
 ## 1:45–2:15 — Proof, not a claim
 **Screen:** `evidence/REPORT.md`, then `evidence/canary.json`, then job artifacts.
