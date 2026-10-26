@@ -16,20 +16,24 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 
 
-def run(label: str, command: list[str]) -> None:
+def run(label: str, command: list[str], expect: int = 0) -> None:
     print(f"\n== {label} ==")
     result = subprocess.run(command, cwd=ROOT)
-    if result.returncode != 0:
-        raise SystemExit(f"{label} failed with exit code {result.returncode}")
+    if result.returncode != expect:
+        raise SystemExit(f"{label} failed with exit code {result.returncode}, expected {expect}")
 
 
 def main() -> int:
     run("unit tests", [PYTHON, "-m", "pytest", "-q"])
+    run("lint", [PYTHON, "-m", "ruff", "check", "."])
+    run("flow schema", [PYTHON, "scripts/lint_flows.py", "--require-files"])
     run("policy allow", [PYTHON, "policy/check.py", "--action", "deploy", "--now", "2026-10-26T12:00:00Z"])
     run(
         "policy deny on bad canary",
         [PYTHON, "policy/check.py", "--action", "promote", "--now", "2026-10-26T12:00:00Z", "--error-rate", "0.6"],
+        expect=2,
     )
+    run("stage coverage", [PYTHON, "scripts/check_stages.py"])
     return 0
 
 
