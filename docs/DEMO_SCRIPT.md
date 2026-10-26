@@ -11,20 +11,21 @@ Not because the models can't write code — because nobody can bound what happen
 the merge. Radius is the control plane that makes autonomy safe enough to say yes to."
 
 ## 0:20–0:45 — The only human action
-**Screen:** New issue from `Ship` template. Title: "Add request ID to /quote response".
-Create.
+**Screen:** New issue from `Ship` template. Title: "Expose service owner in health
+response". Create.
 
 **Voice:** "One human action: an issue. Radius Triage reads the contract, states the
-budget, the blast radius and the rollback path, then moves the work forward."
+budget, the blast radius and the rollback path, then writes the smallest change and
+opens the merge request itself."
 
 Show the `## Radius plan` note ending `Human actions required: 0`.
 
-## 0:45–1:15 — Agent creates the change
-**Screen:** Automate → Sessions, then the merge request and its pipeline.
+## 0:45–1:15 — Agents create and gate the change
+**Screen:** Triage session, then the merge request and the release session.
 
-**Voice:** "GitLab Duo's Developer Flow implements it, opens a merge request and marks
-it ready. The release captain runs the deterministic policy — not a prompt — before it
-is allowed to merge."
+**Voice:** "No assignment, no second click. The merge-request trigger starts the
+release captain, which runs the deterministic policy — not a prompt — before it is
+allowed to merge."
 
 Show `python policy/check.py` output: `Decision: ALLOW`.
 
@@ -32,16 +33,16 @@ Show `python policy/check.py` output: `Decision: ALLOW`.
 **Screen:** Merge request note `## Radius release gate`, then pipeline graph at `monitor`.
 
 **Voice:** "The pipeline canaries the new revision at 25 percent. Radius injects a
-controlled fault — 60 percent of requests fail. The error budget is two percent."
+controlled fault; sixteen of thirty requests fail. The error budget is two percent."
 
-Show job log lines: `error_rate=0.633`, `policy decision=deny`, `rollback_verified=true`.
+Show job log lines: `error_rate=0.533`, `policy decision=deny`, `rollback_verified=true`.
 
 ## 1:45–2:15 — Proof, not a claim
 **Screen:** `evidence/REPORT.md`, then `evidence/canary.json`, then job artifacts.
 
 **Voice:** "Radius does not just stop. It restores the previous revision and proves it:
 revision and build channel match the baseline. The evidence pack is a build artifact,
-linked from the nine-stage report."
+linked from the nine-stage report. This run rolled back to baseline-d5274e72."
 
 ## 2:15–2:40 — Why this wins
 **Screen:** `docs/EVIDENCE.md` gaps table, then `docs/STAGES.md` nine rows.

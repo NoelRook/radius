@@ -103,10 +103,11 @@ drift apart.
 1. A human creates one work item from the **Radius ship** template.
 2. The triage flow posts a plan that quotes the real budgets and chooses
    `PROCEED` or `ESCALATE`.
-3. The Developer Flow opens an MR and marks it ready.
-4. The Release Captain checks the contract and merges with auto-merge.
+3. The Triage flow commits the smallest change to a branch and opens the MR.
+4. The Release Captain checks the contract and merges through the Git
+   credential available to the flow.
 5. The pipeline builds a wheel, publishes it, runs a canary against the previous
-   published revision, injects a 60% error fault, and evaluates the budget.
+   published revision, injects a controlled fault, and evaluates the budget.
 6. The policy denies promotion. The harness stops the candidate, restarts the
    previous revision, and proves it with `/health`.
 7. The Release Captain reads `evidence/canary.json` and comments the rollback
@@ -118,7 +119,7 @@ promoting a good revision. Two outcomes, one contract.
 ## Verification
 
 ```bash
-python -m pytest -q          # 15 tests
+python -m pytest -q          # 16 tests
 ruff check .                 # clean
 python scripts/canary.py --scenario breach --requests 20
 python scripts/canary.py --scenario clean  --requests 15
@@ -129,7 +130,8 @@ Measured locally on 26 Oct 2026:
 
 | Run | Result |
 | --- | --- |
-| Breach | 19/30 requests failed (63.3%), policy denied, **rollback verified** to `baseline-fd56add3` (channel `baseline`) |
+| End-to-end breach | Issue #3 → Triage session 10056015 → MR !9 → Release session 10056111 → pipeline [2989901218](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/-/pipelines/2989901218): **16/30 failed (53.3%)**, policy denied, **rollback verified** to `baseline-d5274e72` (channel `baseline`) |
+| Earlier breach | 19/30 failed (63.3%), policy denied, rollback verified to `baseline-fd56add3` |
 | Healthy | 15 requests, policy allowed, candidate **promoted** |
 | Freeze | merge denied with `freeze_window` reason |
 

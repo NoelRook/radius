@@ -5,16 +5,17 @@ GitLab UI: flow creation is a Maintainer/Owner action, not a repository push.
 
 ## Preflight
 
-- [x] Protected `main` allows **Developers + Maintainers** to merge (service accounts).
+- [x] Protected `main` allows **Developers + Maintainers** to push and merge.
 - [x] **AI → Flows → New flow** is available on the showcase project.
-- [x] Both custom flows are created.
-- [x] **Developer Flow** is available as a foundational flow.
-- [ ] Developer Flow is turned on for the project.
-- [ ] The three triggers below are active.
+- [x] Both custom flows are created and enabled.
+- [x] Two triggers are active; the old Assign trigger is disabled.
+- [x] Project CI/CD variables are **not** visible to ambient flows, so the
+      Release Captain merges through the Git credential in its coding
+      environment.
 
-No custom work item status is required. The hackathon group is managed by the
-organizers, and a project Developer cannot create a status lifecycle. The chain
-therefore uses the documented **Assign** event for Developer Flow.
+No custom work-item status is required. A project Developer cannot create a
+status lifecycle in the organiser-managed group, so the chain uses the
+merge-request event instead.
 
 ## 1. Register Radius Triage & Plan
 
@@ -23,8 +24,10 @@ therefore uses the documented **Assign** event for Developer Flow.
 3. Paste the entire contents of `.gitlab/duo/flows/radius_triage_plan.yaml`.
 4. Create, then enable it for this project.
 
-The flow is read-only except for one work-item note. It never merges, deploys,
-edits the contract, or closes the work item.
+The flow reads the work item and `autonomy.yaml`, decides `PROCEED` or
+`ESCALATE`, commits the smallest change to `radius/auto-<iid>`, pushes the
+branch, opens the MR, and posts one `## Radius plan` note. It never merges,
+deploys, or closes the work item.
 
 ## 2. Register Radius Release Captain
 
@@ -33,21 +36,12 @@ edits the contract, or closes the work item.
 3. Paste the entire contents of `.gitlab/duo/flows/radius_release_captain.yaml`.
 4. Create, then enable it for this project.
 
-The flow may merge only after `policy/check.py` exits 0. On a canary breach the
-policy exits 2, the agent escalates, and the pipeline restores the previous
-revision. It marks a draft MR ready before inspecting it.
+The flow may merge only after `policy/check.py` exits 0. It tries the API merge
+first, then a Git merge and push, then `create_commit` as a last resort. On a
+canary breach the policy exits 2, the pipeline restores the previous revision,
+and the flow posts `## Radius release gate` with the evidence.
 
-## 3. Enable the Developer Flow
-
-1. Open **AI → Flows**.
-2. Find **Developer Flow** (foundational) and turn it on.
-3. Copy its service account name; it is the `Duo Developer` identity used by the
-   Assign trigger.
-
-The Developer Flow supports **Mention** and **Assign** events. It does not start
-from a Work item **Created** event.
-
-## 4. Create the triggers
+## 3. Create the triggers
 
 Open **AI → Triggers → New flow trigger**. For every trigger:
 
@@ -61,60 +55,57 @@ Open **AI → Triggers → New flow trigger**. For every trigger:
 | # | Description | Event | Run when | Type | Flow |
 |---|-------------|-------|----------|------|------|
 | 1 | `radius-plan-on-create` | Work item | Created | Issue | Radius Triage & Plan |
-| 2 | `radius-develop-on-assign` | Assign | — | — | Developer Flow |
-| 3 | `radius-ship-on-mr` | Merge request | Created | — | Radius Release Captain |
+| 2 | `radius-ship-on-mr` | Merge request | Created | — | Radius Release Captain |
 
-Trigger 1 has no completion action: completion settings are available only when
-the condition is **Work item → Status changed** with a status. That is a platform
-constraint, so the plan does not move the work item.
+Disable any auto-created Developer or Assign triggers. With the Triage flow
+creating the MR, there is no assignment step and no Developer Flow in the
+critical path.
 
-Trigger 2 is the documented Developer Flow start event. The issue is created with
-the Developer Flow service account as assignee, so the assignment is part of the
-single human action that creates the issue.
-
-Trigger 3 runs as soon as the Developer Flow opens its draft MR. The Release
-Captain marks the draft ready, then applies policy.
-
-## 5. Capture service account names
+## 4. Capture service account names
 
 After enabling each flow, open **AI → Triggers** and note the generated service
-account, for example `ai-radius-triage-plan-<group>`. Record them in the
-submission evidence. If a service account is not a project member, add it as
-**Developer**.
+account:
 
-## 6. Smoke test
+- `ai-radius-triage-plan-gitlab-ai-hackathon`
+- `ai-radius-release-captain-gitlab-ai-hackathon`
+
+Both are project members with the Developer role. If one is missing, add it as
+**Developer**; protected `main` already allows Developer pushes and merges.
+
+## 5. Smoke test
 
 Create an issue with:
 
 ```
-Title: Add service name to health response
+Title: Expose service owner in health response
 
 ## Intent
-Add a `service` field to the `/health` response with the value `radius-demo`.
+Expose which team owns the service so on-call can route incidents.
 
 ## Acceptance criteria
-- GET /health includes `"service": "radius-demo"`.
-- No other response fields change.
-- Existing tests pass.
-
-## Risk
-- Risk class: low
-- Blast radius: canary at 25 percent
-- Rollback: automatic, per autonomy.yaml
+- GET /health includes "owner": "platform-team".
+- Existing health fields are unchanged.
+- pytest passes.
 ```
 
-Assign the **Developer Flow service account** as assignee when creating the issue.
+Expected sequence with **no further human action**:
 
-Expected sequence with no further human action:
-
-1. Triage posts `## Radius plan`.
-2. Developer Flow opens a draft MR.
-3. The MR-created trigger starts Release Captain, which marks the MR ready,
-   checks policy, merges, waits for the pipeline, reads the canary evidence, and
-   posts `## Radius release gate`.
+1. Triage posts `## Radius plan` and opens MR `radius/auto-<iid>`.
+2. The MR-created trigger starts Release Captain.
+3. Release Captain runs policy, merges through Git, waits for the pipeline,
+   downloads `evidence/canary.json`, and posts `## Radius release gate`.
 4. The canary injects a fault, the error budget is breached, and the pipeline
-   restores the previous revision. The issue stays open with
-   `Decision: ROLLED BACK`.
+   restores the previous revision with `rollback_verified=true`.
+5. The gate ends with `Human actions required: 0`.
+
+Verified on 26 Oct 2026:
+
+- Issue #3 → Triage session `10056015` → MR !9 (`38fec275`) → Release session
+  `10056111` → merge `1506fbc8` → pipeline
+  [2989901218](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/-/pipelines/2989901218)
+  → canary 16/30 failures (53.3%) → policy deny → rollback to
+  `baseline-d5274e72`.
+- Gate note: `Decision: ROLLED BACK`, `Human actions required: 0`.
 
 ## Troubleshooting
 
@@ -125,5 +116,7 @@ Expected sequence with no further human action:
 | `tool not found` | Tool not in ambient registry | Run `python scripts/lint_flows.py --require-files`; it checks the allowlist |
 | `environment must be ambient` | Wrong execution target | Keep `environment: ambient` |
 | Trigger cannot select the flow | Flow not enabled | Enable it in the project, then reload AI → Triggers |
-| Developer trigger rejects Work item Created | Documented limitation | Use the **Assign** event and assign the Developer service account |
-| Service account cannot merge | Protected branch | Allow Developers to merge on `main` (already configured) |
+| `RADIUS_MERGE_TOKEN_MISSING` | Ambient flows do not receive project CI/CD variables | The Release Captain falls back to Git push and `create_commit` |
+| Merge API returns `403 insufficient_scope` | Flow token is scoped to `ai_workflows` | Git push works because the service account is a Developer on a branch that allows Developer pushes |
+| `git push` rejected on main | Protected branch | Allow Developers to push/merge on `main`, or keep the API merge path with a token |
+| Issue closes even after rollback | MR description contains `Closes #<iid>` | Change to `Related to #<iid>` so the release outcome, not the merge, decides the issue state |
