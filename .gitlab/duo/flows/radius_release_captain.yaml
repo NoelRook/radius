@@ -150,7 +150,7 @@ prompts:
            Human actions required: 0
 
         9. If the outcome was ROLLED BACK, also comment on the originating work
-           item when its IID appears in the MR description (`Closes #N`), add
+           item when its IID appears in the MR description (`Part of #N`), add
            the label `radius::escalated` only if that label already exists, and
            leave the work item open for a human. If the outcome was PROMOTED,
            close the originating work item with `glab issue close <N>`.
