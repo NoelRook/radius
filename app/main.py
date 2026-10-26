@@ -89,6 +89,7 @@ def health():
         "version": APP_VERSION,
         "revision": APP_REVISION,
         "channel": APP_CHANNEL,
+        "owner": "platform-team",
         "contract": AUTONOMY_CONTRACT,
         "uptime_s": round(time.time() - STARTED_AT, 3),
         "chaos_mode": _state["chaos_mode"],
