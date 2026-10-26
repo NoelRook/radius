@@ -44,7 +44,8 @@ plan:contract:
     - test -f .gitlab/duo/flows/radius_triage_plan.yaml
     - pip install --quiet pyyaml==6.0.2
     - python -c "import yaml; d=yaml.safe_load(open('autonomy.yaml')); assert d['kind']=='AutonomyContract', 'not an AutonomyContract'; assert d['spec']['budgets']['error_rate_max'] > 0"
-    - echo "Contract, issue template and flow source are present."
+    - python scripts/export_contract.py --check
+    - echo "Contract, JSON fallback, issue template and flow source are present."
 
 # ---------------------------------------------------------------- create
 create:flow-lint:

@@ -1,0 +1,78 @@
+{
+  "apiVersion": "radius.dev/v1",
+  "kind": "AutonomyContract",
+  "metadata": {
+    "name": "radius-demo",
+    "owner": "platform-reliability",
+    "version": "1.0.0",
+    "description": "Blast-radius budget for the Radius demo service. An agent may ship without a human only while every limit below holds. Any breach stops the loop and escalates with evidence."
+  },
+  "spec": {
+    "service": {
+      "name": "radius-demo",
+      "environment": "production",
+      "data_class": "internal",
+      "allowed_data_classes": [
+        "public",
+        "internal"
+      ]
+    },
+    "budgets": {
+      "error_rate_max": 0.02,
+      "latency_p95_ms_max": 800,
+      "spend_usd_per_day_max": 5.0,
+      "change_lines_max": 400,
+      "blast_radius": "canary",
+      "canary_traffic_percent": 25
+    },
+    "freeze_windows": [
+      {
+        "name": "month-end-close",
+        "start": "2026-10-30T22:00:00Z",
+        "end": "2026-11-02T02:00:00Z",
+        "timezone": "UTC",
+        "reason": "Finance close; production changes require a human."
+      }
+    ],
+    "actions": {
+      "merge": {
+        "allowed": true,
+        "requires": [
+          "pipeline_green",
+          "policy_green"
+        ]
+      },
+      "deploy": {
+        "allowed": true,
+        "requires": [
+          "pipeline_green",
+          "policy_green"
+        ]
+      },
+      "promote": {
+        "allowed": true,
+        "requires": [
+          "canary_healthy",
+          "policy_green"
+        ]
+      },
+      "rollback": {
+        "allowed": true,
+        "requires": []
+      }
+    },
+    "escalation": {
+      "channel": "issue",
+      "require_human_for": [
+        "freeze_window",
+        "budget_breach",
+        "data_class_violation"
+      ]
+    },
+    "observability": {
+      "slo": "availability",
+      "window": "5m",
+      "evidence_artifact": "evidence/canary.json"
+    }
+  }
+}

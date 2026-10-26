@@ -27,6 +27,7 @@ def main() -> int:
     run("unit tests", [PYTHON, "-m", "pytest", "-q"])
     run("lint", [PYTHON, "-m", "ruff", "check", "."])
     run("flow schema", [PYTHON, "scripts/lint_flows.py", "--require-files"])
+    run("contract parity", [PYTHON, "scripts/export_contract.py", "--check"])
     run("policy allow", [PYTHON, "policy/check.py", "--action", "deploy", "--now", "2026-10-26T12:00:00Z"])
     run(
         "policy deny on bad canary",

@@ -20,7 +20,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError:  # the ambient flow runtime is Python 3.9 without PyYAML
+    yaml = None  # type: ignore[assignment]
 
 DEFAULT_CONTRACT = Path(__file__).resolve().parents[1] / "autonomy.yaml"
 PROTECTED_ACTIONS = {"merge", "deploy", "promote"}
@@ -44,10 +47,21 @@ class Decision:
 
 
 def load_contract(path: Path) -> dict[str, Any]:
-    with path.open("r", encoding="utf-8") as handle:
-        contract = yaml.safe_load(handle)
+    path = Path(path)
+    if path.suffix == ".json":
+        with path.open("r", encoding="utf-8") as handle:
+            contract = json.load(handle)
+    elif yaml is None:
+        json_path = path.with_suffix(".json")
+        if not json_path.exists():
+            raise ValueError(f"PyYAML is unavailable and {json_path.name} is missing")
+        with json_path.open("r", encoding="utf-8") as handle:
+            contract = json.load(handle)
+    else:
+        with path.open("r", encoding="utf-8") as handle:
+            contract = yaml.safe_load(handle)
     if not isinstance(contract, dict):
-        raise ValueError("contract must be a YAML mapping")
+        raise ValueError("contract must be a mapping")
     return contract
 
 

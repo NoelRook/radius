@@ -66,3 +66,12 @@ def test_cli_exit_codes(tmp_path):
     assert main(["--action", "deploy", "--now", NOW.isoformat()]) == 0
     assert main(["--action", "promote", "--now", NOW.isoformat(), "--error-rate", "0.9"]) == 2
     assert main(["--action", "deploy", "--contract", str(tmp_path / "missing.yaml")]) == 1
+
+
+def test_contract_falls_back_to_json_without_pyyaml(monkeypatch):
+    import policy.check as check_module
+
+    monkeypatch.setattr(check_module, "yaml", None)
+    contract = check_module.load_contract(ROOT / "autonomy.yaml")
+    assert contract["kind"] == "AutonomyContract"
+    assert contract["spec"]["budgets"]["error_rate_max"] > 0
