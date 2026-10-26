@@ -40,7 +40,8 @@ prompts:
         keep every command's output for your final summary.
 
         1. Extract the merge request IID from the goal URL
-           (the number after /merge_requests/). If there is no MR, stop and
+           (the number after /merge_requests/) and set PROJECT_ID from the
+           Project ID line in the user message. If either is missing, stop and
            report that this flow only handles merge requests.
 
         2. Inspect the MR:
@@ -51,8 +52,8 @@ prompts:
            `Decision: ESCALATE` and the blocking reason, then stop.
 
         3. Measure the change and check the contract:
-           git fetch origin <target_branch> <source_branch>
-           LINES=$(git diff --shortstat origin/<target_branch>...origin/<source_branch> | awk '{print $4+$6}')
+           LINES=$(glab mr diff <IID> | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | wc -l | tr -d ' ')
+           echo "changed_lines=$LINES"
            python policy/check.py --action merge --change-lines "$LINES" \
              --data-class internal --format json > /tmp/merge_policy.json
            echo "exit=$?"
@@ -65,10 +66,10 @@ prompts:
            If the command fails, post the error and stop.
 
         5. Find the default branch and wait for its pipeline:
-           BRANCH=$(glab api "projects/{{ project_id }}" | python -c "import json,sys;print(json.load(sys.stdin)['default_branch'])")
+           BRANCH=$(glab api "projects/$PROJECT_ID" | python -c "import json,sys;print(json.load(sys.stdin)['default_branch'])")
            Poll every 15 seconds, up to 60 tries:
-             PID=$(glab api "projects/{{ project_id }}/pipelines?ref=$BRANCH&per_page=1" | python -c "import json,sys;d=json.load(sys.stdin);print(d[0]['id'] if d else '')")
-             STATUS=$(glab api "projects/{{ project_id }}/pipelines/$PID" | python -c "import json,sys;print(json.load(sys.stdin)['status'])")
+             PID=$(glab api "projects/$PROJECT_ID/pipelines?ref=$BRANCH&per_page=1" | python -c "import json,sys;d=json.load(sys.stdin);print(d[0]['id'] if d else '')")
+             STATUS=$(glab api "projects/$PROJECT_ID/pipelines/$PID" | python -c "import json,sys;print(json.load(sys.stdin)['status'])")
            Stop when STATUS is success, failed or canceled.
 
         6. If the pipeline failed, get the failing jobs with
@@ -78,9 +79,9 @@ prompts:
            actionable error line. Stop.
 
         7. Download the canary evidence from the monitor:canary job:
-           JOBS=$(glab api "projects/{{ project_id }}/pipelines/$PID/jobs?per_page=100")
+           JOBS=$(glab api "projects/$PROJECT_ID/pipelines/$PID/jobs?per_page=100")
            JID=$(echo "$JOBS" | python -c "import json,sys;d=json.load(sys.stdin);print(next((j['id'] for j in d if j['name']=='monitor:canary'),''))")
-           glab api "projects/{{ project_id }}/jobs/$JID/artifacts/evidence/canary.json" > /tmp/canary.json
+           glab api "projects/$PROJECT_ID/jobs/$JID/artifacts/evidence/canary.json" > /tmp/canary.json
            Read outcome.promoted, outcome.rollback_verified, outcome.live_revision,
            outcome.policy.decision, outcome.policy.reasons, canary.error_rate and
            canary.latency_p95_ms.
