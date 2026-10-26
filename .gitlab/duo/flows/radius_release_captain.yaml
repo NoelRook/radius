@@ -41,15 +41,14 @@ prompts:
         keep every command's output for your final summary.
 
         0. Authenticate the CLI with the project-scoped merge credential, then
-           confirm access:
-           export GITLAB_HOST=gitlab.com
-           if [ -n "${RADIUS_MERGE_TOKEN:-}" ]; then
-             glab auth login --hostname gitlab.com --with-token <<< "$RADIUS_MERGE_TOKEN" >/dev/null
-           fi
-           glab auth status
-           glab api "projects/$PROJECT_ID" > /dev/null
-           If this fails, stop and report the exact error. Do not continue with
-           unauthenticated commands.
+           confirm access. Use the wrapper for Every glab command. It injects
+           RADIUS_MERGE_TOKEN, because the flow's built-in GITLAB_TOKEN is
+           scoped to ai_workflows and cannot merge:
+           ./scripts/glab-auth.sh auth status
+           ./scripts/glab-auth.sh api "projects/$PROJECT_ID" > /dev/null
+           If the wrapper prints RADIUS_MERGE_TOKEN_MISSING, stop and report
+           that exact line. Do not continue with unauthenticated commands and
+           do not fall back to the built-in token.
 
         1. Read the goal. A merge request trigger sends the MR IID as the whole
            goal (for example "1"). A mention may send a URL ending in
@@ -58,18 +57,18 @@ prompts:
            missing, stop and report that this flow only handles merge requests.
 
         2. If the MR is a draft, mark it ready before inspecting it:
-           DRAFT=$(glab mr view <IID> --output json | python3 -c "import json,sys;print(str(json.load(sys.stdin).get('draft',False)).lower())")
-           if [ "$DRAFT" = "true" ]; then glab mr update <IID> --ready; fi
+           DRAFT=$(./scripts/glab-auth.sh mr view <IID> --output json | python3 -c "import json,sys;print(str(json.load(sys.stdin).get('draft',False)).lower())")
+           if [ "$DRAFT" = "true" ]; then ./scripts/glab-auth.sh mr update <IID> --ready; fi
 
         3. Inspect the MR:
-           glab mr view <IID> --output json > /tmp/mr.json
+           ./scripts/glab-auth.sh mr view <IID> --output json > /tmp/mr.json
            Read: source_branch, target_branch, title, merge_status,
            detailed_merge_status, pipeline.status, changes_count.
            If the MR is not mergeable, post a comment with
            `Decision: ESCALATE` and the blocking reason, then stop.
 
         3. Measure the change and check the contract:
-           LINES=$(glab mr diff <IID> | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | wc -l | tr -d ' ')
+           LINES=$(./scripts/glab-auth.sh mr diff <IID> | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | wc -l | tr -d ' ')
            echo "changed_lines=$LINES"
            python3 policy/check.py --action merge --change-lines "$LINES" \
              --data-class internal --format json > /tmp/merge_policy.json
@@ -79,14 +78,16 @@ prompts:
            never use --force, never edit autonomy.yaml.
 
         4. Merge with auto-merge so the pipeline still gates it:
-           glab mr merge <IID> --auto-merge --yes --remove-source-branch
-           If the command fails, post the error and stop.
+           ./scripts/glab-auth.sh mr merge <IID> --auto-merge --yes --remove-source-branch
+           If the command fails, post the exact stderr and stop. A 403 means the
+           merge credential is missing or lacks api scope; never retry with the
+           built-in token.
 
         5. Find the default branch and wait for its pipeline:
-           BRANCH=$(glab api "projects/$PROJECT_ID" | python3 -c "import json,sys;print(json.load(sys.stdin)['default_branch'])")
+           BRANCH=$(./scripts/glab-auth.sh api "projects/$PROJECT_ID" | python3 -c "import json,sys;print(json.load(sys.stdin)['default_branch'])")
            Poll every 15 seconds, up to 60 tries:
-             PID=$(glab api "projects/$PROJECT_ID/pipelines?ref=$BRANCH&per_page=1" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d[0]['id'] if d else '')")
-             STATUS=$(glab api "projects/$PROJECT_ID/pipelines/$PID" | python3 -c "import json,sys;print(json.load(sys.stdin)['status'])")
+             PID=$(./scripts/glab-auth.sh api "projects/$PROJECT_ID/pipelines?ref=$BRANCH&per_page=1" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d[0]['id'] if d else '')")
+             STATUS=$(./scripts/glab-auth.sh api "projects/$PROJECT_ID/pipelines/$PID" | python3 -c "import json,sys;print(json.load(sys.stdin)['status'])")
            Stop when STATUS is success, failed or canceled.
 
         6. If the pipeline failed, get the failing jobs with
@@ -96,15 +97,15 @@ prompts:
            actionable error line. Stop.
 
         7. Download the canary evidence from the monitor:canary job:
-           JOBS=$(glab api "projects/$PROJECT_ID/pipelines/$PID/jobs?per_page=100")
+           JOBS=$(./scripts/glab-auth.sh api "projects/$PROJECT_ID/pipelines/$PID/jobs?per_page=100")
            JID=$(echo "$JOBS" | python3 -c "import json,sys;d=json.load(sys.stdin);print(next((j['id'] for j in d if j['name']=='monitor:canary'),''))")
-           glab api "projects/$PROJECT_ID/jobs/$JID/artifacts/evidence/canary.json" > /tmp/canary.json
+           ./scripts/glab-auth.sh api "projects/$PROJECT_ID/jobs/$JID/artifacts/evidence/canary.json" > /tmp/canary.json
            Read outcome.promoted, outcome.rollback_verified, outcome.live_revision,
            outcome.policy.decision, outcome.policy.reasons, canary.error_rate and
            canary.latency_p95_ms.
 
         8. Post exactly one comment on the merge request with
-           `glab mr note create <IID> -m "..."` using this structure:
+           `./scripts/glab-auth.sh mr note create <IID> -m "..."` using this structure:
 
            ## Radius release gate
 
@@ -125,7 +126,7 @@ prompts:
            item when its IID appears in the MR description (`Closes #N`), add
            the label `radius::escalated` only if that label already exists, and
            leave the work item open for a human. If the outcome was PROMOTED,
-           close the originating work item with `glab issue close <N>`.
+           close the originating work item with `./scripts/glab-auth.sh issue close <N>`.
 
         Hard rules:
         - Never merge when policy exits 2.
