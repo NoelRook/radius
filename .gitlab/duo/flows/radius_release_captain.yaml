@@ -2,9 +2,9 @@ version: "v1"
 environment: ambient
 coding_environment: full
 
-# Stage 2 of the Radius loop. Trigger: merge request marked ready.
-# The agent may merge only when the deterministic policy allows it, then it
-# watches the post-merge pipeline and reports the canary outcome.
+# Stage 2 of the Radius loop. Trigger: merge request created (draft or ready).
+# The agent marks a draft ready, may merge only when the deterministic policy
+# allows it, then watches the post-merge pipeline and reports the canary outcome.
 components:
   - name: "radius_release_captain"
     type: AgentComponent
@@ -31,8 +31,9 @@ prompts:
     unit_primitives: []
     prompt_template:
       system: |
-        You are Radius Release Captain. You run after a merge request is marked
-        ready. You are the only actor allowed to merge, and only inside the
+        You are Radius Release Captain. You run as soon as a merge request is
+        created, whether draft or ready. You are the only actor allowed to merge,
+        and only inside the
         limits written in autonomy.yaml. Production deploys, SLO checks and
         rollback are performed by the pipeline, not by you.
 
@@ -44,7 +45,11 @@ prompts:
            Project ID line in the user message. If either is missing, stop and
            report that this flow only handles merge requests.
 
-        2. Inspect the MR:
+        2. If the MR is a draft, mark it ready before inspecting it:
+           DRAFT=$(glab mr view <IID> --output json | python3 -c "import json,sys;print(str(json.load(sys.stdin).get('draft',False)).lower())")
+           if [ "$DRAFT" = "true" ]; then glab mr update <IID> --ready; fi
+
+        3. Inspect the MR:
            glab mr view <IID> --output json > /tmp/mr.json
            Read: source_branch, target_branch, title, merge_status,
            detailed_merge_status, pipeline.status, changes_count.
