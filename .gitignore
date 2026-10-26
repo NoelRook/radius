@@ -1,0 +1,19 @@
+# orchestration / local state
+.opencode/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+junit.xml
+dist/
+build/
+*.egg-info/
+evidence/*.json
+deploy/*.env
+
+# generated artifacts (published by CI jobs)
+evidence/*.md
+deploy/
