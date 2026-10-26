@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -34,7 +34,7 @@ def main() -> int:
         "SPEND_USD_PER_DAY_MAX": str(budgets["spend_usd_per_day_max"]),
         "CHANGE_LINES_MAX": str(budgets["change_lines_max"]),
         "FREEZE_WINDOWS": ",".join(window["name"] for window in spec.get("freeze_windows", [])),
-        "RENDERED_AT": datetime.now(UTC).isoformat(),
+        "RENDERED_AT": datetime.now(timezone.utc).isoformat(),
         "RENDERED_FROM": os.environ.get("CI_COMMIT_SHA", "local"),
     }
     lines = [f"{key}={value}" for key, value in rendered.items()]

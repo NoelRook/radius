@@ -1,5 +1,5 @@
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -8,8 +8,8 @@ sys.path.insert(0, str(ROOT))
 from policy.check import active_freeze, evaluate, load_contract, validate_contract  # noqa: E402
 
 CONTRACT = load_contract(ROOT / "autonomy.yaml")
-NOW = datetime(2026, 10, 26, 12, 0, tzinfo=UTC)
-FREEZE_NOW = datetime(2026, 10, 31, 12, 0, tzinfo=UTC)
+NOW = datetime(2026, 10, 26, 12, 0, tzinfo=timezone.utc)
+FREEZE_NOW = datetime(2026, 10, 31, 12, 0, tzinfo=timezone.utc)
 
 
 def test_contract_is_valid():

@@ -16,7 +16,7 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -74,8 +74,8 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
 def parse_time(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
-    return parsed.astimezone(UTC)
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def active_freeze(spec: dict[str, Any], now: datetime) -> dict[str, Any] | None:
@@ -215,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         contract = load_contract(args.contract)
-        now = parse_time(args.now) if args.now else datetime.now(UTC)
+        now = parse_time(args.now) if args.now else datetime.now(timezone.utc)
         decision = evaluate(
             contract,
             action=args.action,

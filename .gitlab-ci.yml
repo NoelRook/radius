@@ -98,6 +98,15 @@ verify:policy:
       test "$code" -eq 2
       echo "Freeze window correctly denied (exit 2)."
 
+# The flow ambient environment runs Python 3.9. Keep the policy engine
+# importable there, not only on the 3.12 CI image.
+verify:policy39:
+  stage: verify
+  image: python:3.9-slim
+  script:
+    - pip install --quiet pyyaml==6.0.2
+    - python policy/check.py --action deploy --error-rate 0.0 --latency-p95-ms 120 --spend-usd 0.5 --change-lines 10 --data-class internal --format text
+
 # ---------------------------------------------------------------- secure
 secure:secrets:
   stage: secure
