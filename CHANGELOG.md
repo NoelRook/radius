@@ -17,3 +17,7 @@
   outage can no longer stop the release loop.
 - Upgrade FastAPI to 0.162.0 (Starlette 1.10.0) to clear seven known
   vulnerabilities reported by `pip-audit`.
+- Keep the PEP 427 wheel filename (`radius_demo-0.1.0-py3-none-any.whl`) instead
+  of renaming it to `radius-demo-<sha>.whl`; pip rejects the renamed file, which
+  would have broken the canary install.
+- Extract the baseline source archive without assuming a fixed top-level folder.

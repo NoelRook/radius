@@ -131,7 +131,7 @@ package:wheel:
   script:
     - pip install --quiet build==1.2.2 cyclonedx-bom
     - python -m build --wheel
-    - cp dist/radius_demo-*.whl "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
+    - test -f dist/radius_demo-0.1.0-py3-none-any.whl
     - cyclonedx-py environment -o dist/sbom.cdx.json
     - ls -lh dist/
   artifacts:
@@ -151,9 +151,9 @@ package:publish:
     - |
       curl --fail --silent --show-error --retry 3 \
         --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" \
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/radius/${CI_COMMIT_SHORT_SHA}/radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
-    - echo "published radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
+        --upload-file "dist/radius_demo-0.1.0-py3-none-any.whl" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/radius/${CI_COMMIT_SHORT_SHA}/radius_demo-0.1.0-py3-none-any.whl"
+    - echo "published radius_demo-0.1.0-py3-none-any.whl for ${CI_COMMIT_SHORT_SHA}"
 
 # ---------------------------------------------------------------- release
 release:create:
@@ -193,7 +193,7 @@ configure:render:
   script:
     - pip install --quiet -r requirements-dev.txt
     - export CHAOS_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(16))')"
-    - python scripts/canary.py --candidate-wheel "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" "$@"
+    - python scripts/canary.py --candidate-wheel "dist/radius_demo-0.1.0-py3-none-any.whl" "$@"
   artifacts:
     when: always
     paths:

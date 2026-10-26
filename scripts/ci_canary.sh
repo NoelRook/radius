@@ -34,10 +34,11 @@ print(f"downloaded baseline archive for {sha[:8]} ({len(data)} bytes)")
 PY
   then
     mkdir -p /tmp/radius-baseline
-    if tar -xzf /tmp/radius-baseline.tar.gz -C /tmp/radius-baseline --strip-components=1; then
-      if [ -f /tmp/radius-baseline/pyproject.toml ]; then
+    if tar -xzf /tmp/radius-baseline.tar.gz -C /tmp/radius-baseline; then
+      BASELINE_DIR="$(dirname "$(find /tmp/radius-baseline -maxdepth 2 -name pyproject.toml | head -1)")"
+      if [ -n "$BASELINE_DIR" ] && [ -f "$BASELINE_DIR/pyproject.toml" ]; then
         if "$PYTHON" -m pip install --quiet build==1.2.2 \
-          && (cd /tmp/radius-baseline && "$PYTHON" -m build --wheel --outdir /tmp/radius-baseline-dist >/tmp/radius-baseline-build.log 2>&1); then
+          && (cd "$BASELINE_DIR" && "$PYTHON" -m build --wheel --outdir /tmp/radius-baseline-dist >/tmp/radius-baseline-build.log 2>&1); then
           WHEEL="$(ls /tmp/radius-baseline-dist/*.whl | head -1)"
           STABLE_ARGS=(--stable-wheel "$WHEEL" --stable-revision "baseline-${BASE_SHA:0:8}")
           echo "baseline artifact: $WHEEL (${BASE_SHA:0:8})"
@@ -58,7 +59,7 @@ fi
 
 "$PYTHON" scripts/canary.py \
   --scenario "$SCENARIO" \
-  --candidate-wheel "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" \
+  --candidate-wheel "dist/radius_demo-0.1.0-py3-none-any.whl" \
   --requests "$REQUESTS" \
   "${STABLE_ARGS[@]}" \
   --allow-seed

@@ -168,7 +168,7 @@ def fetch_stable_wheel(api_url: str, project_id: str, current_version: str, work
             version = package["version"]
             wheel_url = (
                 f"{api_url.rstrip('/')}/projects/{project_id}/packages/generic/radius/{version}/"
-                f"radius-demo-{version}.whl"
+                f"radius_demo-0.1.0-py3-none-any.whl"
             )
             wheel = requests.get(wheel_url, timeout=60)
             if wheel.ok and wheel.content:
