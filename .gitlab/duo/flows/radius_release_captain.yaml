@@ -121,7 +121,6 @@ prompts:
         {{ goal }}
 
         Project ID: {{ project_id }}
-    placeholder: history
     params:
       timeout: 1800
 

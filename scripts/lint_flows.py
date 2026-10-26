@@ -89,6 +89,10 @@ def lint_flow(path: Path) -> list[str]:
             fail(errors, f"{path}: every local prompt needs a prompt_id")
             continue
         prompt_ids.add(prompt["prompt_id"])
+        allowed_prompt_keys = {"prompt_id", "name", "unit_primitives", "prompt_template", "params"}
+        extra = sorted(set(prompt) - allowed_prompt_keys)
+        if extra:
+            fail(errors, f"{path}: prompt '{prompt['prompt_id']}' has unsupported fields {extra}")
         if "model" in prompt:
             fail(errors, f"{path}: prompt '{prompt['prompt_id']}' sets restricted field 'model'")
         params = prompt.get("params") or {}
