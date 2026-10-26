@@ -131,17 +131,29 @@ package:wheel:
   script:
     - pip install --quiet build==1.2.2 cyclonedx-bom
     - python -m build --wheel
-    - cp dist/radius_demo-0.1.0-py3-none-any.whl "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
+    - cp dist/radius_demo-*.whl "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
     - cyclonedx-py environment -o dist/sbom.cdx.json
-    - |
-      curl --fail --silent --show-error \
-        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" \
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/radius/${CI_COMMIT_SHORT_SHA}/radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
     - ls -lh dist/
   artifacts:
     paths:
       - dist/
+
+# Publishing is evidence, not a dependency: a registry outage must not stop the
+# release loop. The canary consumes the wheel from this job's artifacts.
+package:publish:
+  stage: package
+  extends: .python
+  allow_failure: true
+  needs:
+    - job: package:wheel
+      artifacts: true
+  script:
+    - |
+      curl --fail --silent --show-error --retry 3 \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        --upload-file "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/radius/${CI_COMMIT_SHORT_SHA}/radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
+    - echo "published radius-demo-${CI_COMMIT_SHORT_SHA}.whl"
 
 # ---------------------------------------------------------------- release
 release:create:
@@ -197,7 +209,7 @@ monitor:canary:
   script:
     - pip install --quiet -r requirements-dev.txt
     - export CHAOS_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(16))')"
-    - python scripts/canary.py --scenario breach --candidate-wheel "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" --requests 30 --allow-seed
+    - bash scripts/ci_canary.sh breach 30
 
 monitor:healthy:
   extends: .canary
@@ -206,7 +218,7 @@ monitor:healthy:
   script:
     - pip install --quiet -r requirements-dev.txt
     - export CHAOS_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(16))')"
-    - python scripts/canary.py --scenario clean --candidate-wheel "dist/radius-demo-${CI_COMMIT_SHORT_SHA}.whl" --requests 15 --allow-seed
+    - bash scripts/ci_canary.sh clean 15
 
 # ---------------------------------------------------------------- govern
 govern:report:

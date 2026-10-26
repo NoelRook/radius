@@ -67,7 +67,7 @@ If the trigger UI does not offer "Set work item status" or "Mark merge requests
 as ready", the platform version is older than 18.8. Stop and check
 **Help → About**; the project needs the chain-trigger behaviour.
 
-## 4. First run: seed the package registry
+## 4. First run
 
 1. Create an issue with the **Radius ship** template.
 2. Watch the issue: the triage flow posts `## Radius plan` with the real budgets
@@ -75,19 +75,22 @@ as ready", the platform version is older than 18.8. Stop and check
 3. The Developer Flow opens an MR and marks it ready.
 4. The Release Captain runs `policy/check.py`, merges with auto-merge, and waits
    for the default-branch pipeline.
-5. The pipeline runs all nine stages. Because there is no previous package yet,
-   `monitor:canary` records `outcome.seeded = true` and does **not** claim a
-   rollback. This is intentional and visible in the evidence.
+5. The pipeline runs all nine stages. `monitor:canary` builds the **stable**
+   wheel from the previous commit (`CI_COMMIT_BEFORE_SHA`) and the **candidate**
+   wheel from the current commit. Only the repository's very first pipeline has
+   no previous revision; it records `outcome.seeded = true` and does **not**
+   claim a rollback. That is intentional and visible in the evidence.
 6. The Release Captain comments `Decision: PROMOTED` only if the policy allowed
    the healthy canary; on the first run it should report the seed outcome
    instead. If it cannot find evidence, it says so.
 
 ## 5. Second run: the real rollback
 
-Create a second issue (or push a trivial commit to `main`). Now the previous
-package exists, so `monitor:canary`:
+Create a second issue (or push a trivial commit to `main`). Every pipeline
+after the first has a previous commit, so `monitor:canary`:
 
-1. downloads the previous wheel as **stable**;
+1. downloads the previous commit's source archive and builds its wheel as
+   **stable**;
 2. installs the new wheel as **candidate**;
 3. sends 10 baseline requests, injects a 60% error fault, sends 30 requests;
 4. gets `deny` from `policy/check.py` (`error_budget`);
@@ -106,7 +109,7 @@ In the pipeline:
 - `verify:test` → 15 passed, coverage report.
 - `verify:policy` → allow, deny (error budget), deny (freeze).
 - `secure:secrets`, `secure:deps`, `secure:sast` → visible security stage.
-- `package:wheel` → wheel + SBOM in the package registry.
+- `package:wheel` → wheel + SBOM artifacts; `package:publish` mirrors the wheel to the package registry (non-blocking).
 - `release:create` → a GitLab Release on `main`.
 - `configure:render` → `deploy/runtime.json`.
 - `monitor:canary` → artifacts `evidence/canary.json`, `canary.md`.
@@ -129,7 +132,7 @@ The project is public, so these work without a token.
 | Flow created but not selectable in a trigger | Flow not enabled for the project | Project → Automate → Flows → Enable |
 | Trigger never fires | Bot/service account tried to start it; only chain status changes are allowed | Use the completion action, not a mention from another flow |
 | Release Captain cannot merge | `main` protected to Maintainers, or auto-merge disabled | Add the service account to allowed-to-merge, or unprotect `main` |
-| `monitor:canary` exits 4 | No previous package and `--allow-seed` missing | Keep `--allow-seed`; the next run will have a baseline |
+| `monitor:canary` exits 4 | No previous revision could be built and `--allow-seed` is missing | Keep `--allow-seed`; the next commit provides a baseline |
 | `monitor:canary` exits 3 | Rollback health check failed | Treat as a real failure; inspect `evidence/canary.json` and the candidate log |
 | Credits hit zero | Too many flow sessions | Stop; the demo needs two sessions, not a loop |
 | `release:create` fails on tag | Tag protected or already exists | Change the tag pattern or delete the stale tag |
