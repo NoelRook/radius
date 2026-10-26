@@ -2,8 +2,14 @@
 
 **Agents ship to production. A blast-radius budget decides how far they can go.**
 
-[![pipeline](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/badges/main/pipeline.svg)](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/-/pipelines)
+[![GitHub CI](https://github.com/NoelRook/radius/actions/workflows/ci.yml/badge.svg)](https://github.com/NoelRook/radius/actions/workflows/ci.yml)
+[![GitLab pipeline](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/badges/main/pipeline.svg)](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase/-/pipelines)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+> **Repository mirror.** The autonomous loop runs on GitLab Duo Agent Platform;
+> the verified end-to-end run and nine-stage pipeline live in the
+> [GitLab project](https://gitlab.com/gitlab-ai-hackathon/transcend-october-2026/43225718/showcase).
+> This GitHub mirror runs the deterministic verification suite on every push.
 
 Radius is a nine-stage autonomous delivery loop for GitLab Duo Agent Platform.
 One human creates a work item. From there, agents plan, open a merge request,

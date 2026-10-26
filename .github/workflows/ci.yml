@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Unit tests
+        run: pytest -q
+      - name: Flow schema
+        run: python scripts/lint_flows.py --require-files
+      - name: Contract parity
+        run: python scripts/export_contract.py --check
+      - name: Nine-stage coverage
+        run: python scripts/check_stages.py
+      - name: Policy allows a safe deploy
+        run: python policy/check.py --action deploy --error-rate 0 --latency-p95-ms 100 --spend-usd 1 --change-lines 10 --data-class internal
+      - name: Policy denies a bad promotion
+        run: |
+          set +e
+          python policy/check.py --action promote --error-rate 0.6 --latency-p95-ms 100 --spend-usd 1 --change-lines 10 --data-class internal
+          code=$?
+          set -e
+          test "$code" -eq 2
