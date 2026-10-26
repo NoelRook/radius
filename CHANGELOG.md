@@ -21,3 +21,6 @@
   of renaming it to `radius-demo-<sha>.whl`; pip rejects the renamed file, which
   would have broken the canary install.
 - Extract the baseline source archive without assuming a fixed top-level folder.
+- Replace the package publish `curl` call with Python `urllib`; `python:3.12-slim`
+  does not ship curl, which was the only remaining failed job in pipeline
+  2988331385.

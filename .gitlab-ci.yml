@@ -149,10 +149,26 @@ package:publish:
       artifacts: true
   script:
     - |
-      curl --fail --silent --show-error --retry 3 \
-        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        --upload-file "dist/radius_demo-0.1.0-py3-none-any.whl" \
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/radius/${CI_COMMIT_SHORT_SHA}/radius_demo-0.1.0-py3-none-any.whl"
+      python - <<'PY'
+      import os
+      import urllib.request
+
+      name = "radius_demo-0.1.0-py3-none-any.whl"
+      url = (
+          f"{os.environ['CI_API_V4_URL']}/projects/{os.environ['CI_PROJECT_ID']}"
+          f"/packages/generic/radius/{os.environ['CI_COMMIT_SHORT_SHA']}/{name}"
+      )
+      with open(f"dist/{name}", "rb") as handle:
+          payload = handle.read()
+      request = urllib.request.Request(
+          url,
+          data=payload,
+          method="PUT",
+          headers={"JOB-TOKEN": os.environ["CI_JOB_TOKEN"]},
+      )
+      with urllib.request.urlopen(request, timeout=60) as response:
+          print(response.status, url)
+      PY
     - echo "published radius_demo-0.1.0-py3-none-any.whl for ${CI_COMMIT_SHORT_SHA}"
 
 # ---------------------------------------------------------------- release
