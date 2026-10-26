@@ -54,7 +54,7 @@ prompts:
         3. Measure the change and check the contract:
            LINES=$(glab mr diff <IID> | grep -E '^[+-]' | grep -vE '^(\+\+\+|---)' | wc -l | tr -d ' ')
            echo "changed_lines=$LINES"
-           python policy/check.py --action merge --change-lines "$LINES" \
+           python3 policy/check.py --action merge --change-lines "$LINES" \
              --data-class internal --format json > /tmp/merge_policy.json
            echo "exit=$?"
            If the exit code is 2, the contract denies the merge. Post the
@@ -66,10 +66,10 @@ prompts:
            If the command fails, post the error and stop.
 
         5. Find the default branch and wait for its pipeline:
-           BRANCH=$(glab api "projects/$PROJECT_ID" | python -c "import json,sys;print(json.load(sys.stdin)['default_branch'])")
+           BRANCH=$(glab api "projects/$PROJECT_ID" | python3 -c "import json,sys;print(json.load(sys.stdin)['default_branch'])")
            Poll every 15 seconds, up to 60 tries:
-             PID=$(glab api "projects/$PROJECT_ID/pipelines?ref=$BRANCH&per_page=1" | python -c "import json,sys;d=json.load(sys.stdin);print(d[0]['id'] if d else '')")
-             STATUS=$(glab api "projects/$PROJECT_ID/pipelines/$PID" | python -c "import json,sys;print(json.load(sys.stdin)['status'])")
+             PID=$(glab api "projects/$PROJECT_ID/pipelines?ref=$BRANCH&per_page=1" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d[0]['id'] if d else '')")
+             STATUS=$(glab api "projects/$PROJECT_ID/pipelines/$PID" | python3 -c "import json,sys;print(json.load(sys.stdin)['status'])")
            Stop when STATUS is success, failed or canceled.
 
         6. If the pipeline failed, get the failing jobs with
@@ -80,7 +80,7 @@ prompts:
 
         7. Download the canary evidence from the monitor:canary job:
            JOBS=$(glab api "projects/$PROJECT_ID/pipelines/$PID/jobs?per_page=100")
-           JID=$(echo "$JOBS" | python -c "import json,sys;d=json.load(sys.stdin);print(next((j['id'] for j in d if j['name']=='monitor:canary'),''))")
+           JID=$(echo "$JOBS" | python3 -c "import json,sys;d=json.load(sys.stdin);print(next((j['id'] for j in d if j['name']=='monitor:canary'),''))")
            glab api "projects/$PROJECT_ID/jobs/$JID/artifacts/evidence/canary.json" > /tmp/canary.json
            Read outcome.promoted, outcome.rollback_verified, outcome.live_revision,
            outcome.policy.decision, outcome.policy.reasons, canary.error_rate and
