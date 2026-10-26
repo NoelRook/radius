@@ -30,6 +30,7 @@ def test_health_reports_revision():
     body = response.json()
     assert body["status"] == "ok"
     assert body["revision"] == "test-sha"
+    assert body["contract"] == "autonomy.yaml"
     assert response.headers["x-radius-revision"] == "test-sha"
 
 
