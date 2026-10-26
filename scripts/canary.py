@@ -46,9 +46,10 @@ def install_wheel(wheel: Path, target: Path) -> None:
     )
 
 
-def start_service(port: int, revision: str, app_dir: Path | None) -> subprocess.Popen:
+def start_service(port: int, revision: str, app_dir: Path | None, channel: str | None = None) -> subprocess.Popen:
     env = os.environ.copy()
     env["APP_REVISION"] = revision
+    env["APP_CHANNEL"] = channel or ("baseline" if revision.startswith("baseline-") else "candidate")
     env["CHAOS_KEY"] = KEY
     env["PYTHONUNBUFFERED"] = "1"
     command = [

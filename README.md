@@ -129,7 +129,7 @@ Measured locally on 26 Oct 2026:
 
 | Run | Result |
 | --- | --- |
-| Breach | 19/30 requests failed (63.3%), policy denied, **rollback verified** to `baseline-v0` (channel `baseline`) |
+| Breach | 20/30 requests failed (66.7%), policy denied, **rollback verified** to `baseline-834b05f9` (channel `baseline`) |
 | Healthy | 15 requests, policy allowed, candidate **promoted** |
 | Freeze | merge denied with `freeze_window` reason |
 

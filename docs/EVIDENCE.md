@@ -115,7 +115,7 @@ and read by the agents (soft gate), with a JSON evidence pack per run.
 | --- | --- | --- | --- |
 | G1 trust | 30% low/no trust; 46% distrust accuracy | `autonomy.yaml` budgets; policy engine exits 2 on breach | `policy/tests/test_policy.py`; `verify:policy` CI job |
 | G2 autonomy ceiling | Copilot cannot merge; foundational flows stop at MR | Release Captain merges only when policy allows | flow source + `verify:policy`; live flow run (runbook) |
-| G3 post-merge blind spot | CI green ≠ production healthy | canary + SLO evaluation + automatic rollback | `scripts/canary.py`; breach run: 19/30 errors, rollback verified |
+| G3 post-merge blind spot | CI green ≠ production healthy | canary + SLO evaluation + automatic rollback | `scripts/canary.py`; breach run: 20/30 errors, rollback verified |
 | G4 orchestration | no cron; bots cannot trigger | one human action; chain trigger on work item status; MR marked ready; pipeline events | `docs/STAGES.md`, trigger config in `docs/RUNBOOK.md` |
 | G5 accountability | policies live outside the repo | versioned contract + `evidence/canary.json` + `evidence/REPORT.md` | `govern:report` CI job; evidence artifact |
 | G6 security of external agents | no prompt scanning, limited isolation | native custom flows only | flow sources use no external agent |
@@ -128,7 +128,7 @@ and read by the agents (soft gate), with a JSON evidence pack per run.
 | Policy: healthy deploy | allow, exit 0 | `policy/check.py` |
 | Policy: 60% error rate | deny, exit 2, reason `error_budget` | `policy/check.py` |
 | Policy: merge during freeze | deny, exit 2, reason `freeze_window` | `policy/check.py` |
-| Canary breach | 19/30 requests failed (63.3%), policy denied promotion, rollback verified to `baseline-v0`, live channel = `baseline` | `evidence/canary.json` |
+| Canary breach | 20/30 requests failed (66.7%), policy denied promotion, rollback verified to `baseline-834b05f9`, live channel = `baseline` | `evidence/canary.json` |
 | Canary healthy | 15 requests, policy allowed, candidate promoted | `evidence/canary-clean.json` |
 | Nine-stage report | generated with a link per stage | `evidence/REPORT.md` |
 
