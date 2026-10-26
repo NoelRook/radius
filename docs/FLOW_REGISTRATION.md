@@ -111,7 +111,7 @@ Verified on 26 Oct 2026:
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `prompts.0.placeholder: Extra inputs are not permitted` | Old YAML | Use commit `fd56add` or later; the linter rejects unknown prompt keys |
+| `prompts.0.placeholder: Extra inputs are not permitted` | Old YAML | Use the current `main`; the linter rejects unknown prompt keys |
 | `name/description/product_group` not permitted | Top-level metadata | Removed; the UI supplies the name |
 | `tool not found` | Tool not in ambient registry | Run `python scripts/lint_flows.py --require-files`; it checks the allowlist |
 | `environment must be ambient` | Wrong execution target | Keep `environment: ambient` |
@@ -119,4 +119,4 @@ Verified on 26 Oct 2026:
 | `RADIUS_MERGE_TOKEN_MISSING` | Ambient flows do not receive project CI/CD variables | The Release Captain falls back to Git push and `create_commit` |
 | Merge API returns `403 insufficient_scope` | Flow token is scoped to `ai_workflows` | Git push works because the service account is a Developer on a branch that allows Developer pushes |
 | `git push` rejected on main | Protected branch | Allow Developers to push/merge on `main`, or keep the API merge path with a token |
-| Issue closes even after rollback | MR description contains `Closes #<iid>` | Change to `Related to #<iid>` so the release outcome, not the merge, decides the issue state |
+| Issue closes even after rollback | MR description contains `Closes #<iid>` | Use `Part of #<iid>` so the release outcome, not the merge, decides the issue state |
