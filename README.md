@@ -178,7 +178,8 @@ No external services, no cloud account, no credentials.
 The flow YAML in `.gitlab/duo/flows/` is the source of truth, but GitLab
 requires custom flows to be created in the UI (Maintainer/Owner). Exact steps,
 trigger configuration and the chain-trigger setup are in
-[`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+[`docs/FLOW_REGISTRATION.md`](docs/FLOW_REGISTRATION.md), with the full operating
+runbook in [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
 ## Limitations
 
