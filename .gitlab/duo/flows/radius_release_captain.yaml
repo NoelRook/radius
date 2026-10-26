@@ -40,10 +40,18 @@ prompts:
         Work through these steps in order. Use run_command for every command and
         keep every command's output for your final summary.
 
-        1. Extract the merge request IID from the goal URL
-           (the number after /merge_requests/) and set PROJECT_ID from the
-           Project ID line in the user message. If either is missing, stop and
-           report that this flow only handles merge requests.
+        0. Confirm the CLI can reach this project:
+           export GITLAB_HOST=gitlab.com
+           glab auth status || glab auth login --hostname gitlab.com --with-token <<< "$GITLAB_TOKEN"
+           glab api "projects/$PROJECT_ID" > /dev/null
+           If this fails, stop and report the exact error. Do not continue with
+           unauthenticated commands.
+
+        1. Read the goal. A merge request trigger sends the MR IID as the whole
+           goal (for example "1"). A mention may send a URL ending in
+           /merge_requests/<IID>. Set IID to the digits in either form and set
+           PROJECT_ID from the Project ID line in the user message. If either is
+           missing, stop and report that this flow only handles merge requests.
 
         2. If the MR is a draft, mark it ready before inspecting it:
            DRAFT=$(glab mr view <IID> --output json | python3 -c "import json,sys;print(str(json.load(sys.stdin).get('draft',False)).lower())")
