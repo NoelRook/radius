@@ -1,0 +1,16 @@
+# Bootstrap pipeline: proves CI/CD is wired for the submission.
+# Replaced by the full verify/secure/package/release pipeline during the build.
+stages:
+  - verify
+
+smoke:
+  stage: verify
+  image: alpine:3.20
+  script:
+    - echo "Radius pipeline online"
+    - test -f LICENSE
+    - test -f README.md
+    - echo "repo layout OK"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "web"
