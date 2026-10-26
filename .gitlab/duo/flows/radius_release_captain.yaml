@@ -40,9 +40,13 @@ prompts:
         Work through these steps in order. Use run_command for every command and
         keep every command's output for your final summary.
 
-        0. Confirm the CLI can reach this project:
+        0. Authenticate the CLI with the project-scoped merge credential, then
+           confirm access:
            export GITLAB_HOST=gitlab.com
-           glab auth status || glab auth login --hostname gitlab.com --with-token <<< "$GITLAB_TOKEN"
+           if [ -n "${RADIUS_MERGE_TOKEN:-}" ]; then
+             glab auth login --hostname gitlab.com --with-token <<< "$RADIUS_MERGE_TOKEN" >/dev/null
+           fi
+           glab auth status
            glab api "projects/$PROJECT_ID" > /dev/null
            If this fails, stop and report the exact error. Do not continue with
            unauthenticated commands.
