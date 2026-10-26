@@ -70,8 +70,9 @@ post-merge deploy, an SLO check or a rollback. Source:
 
 **Gap G4 — the orchestration gap.** A hands-off loop has to be built from the
 few chainable events GitLab actually allows. Radius does that explicitly: one
-human action (work item created), then chain triggers and pipeline events carry
-the loop. No cron, no stored human PAT.
+human action (work item created) starts Triage; Triage creates the merge request;
+the merge-request event starts Release Captain; pipeline events carry the rest.
+No cron, no status chain, no stored human PAT.
 
 ### External agents weaken the security boundary
 
@@ -116,7 +117,7 @@ and read by the agents (soft gate), with a JSON evidence pack per run.
 | G1 trust | 30% low/no trust; 46% distrust accuracy | `autonomy.yaml` budgets; policy engine exits 2 on breach | `policy/tests/test_policy.py`; `verify:policy` CI job |
 | G2 autonomy ceiling | Copilot cannot merge; foundational flows stop at MR | Release Captain merges only when policy allows | flow source + `verify:policy`; live flow run (runbook) |
 | G3 post-merge blind spot | CI green ≠ production healthy | canary + SLO evaluation + automatic rollback | `scripts/canary.py`; hands-off run: 16/30 errors, rollback verified to `baseline-d5274e72` |
-| G4 orchestration | no cron; bots cannot trigger | one human action; chain trigger on work item status; MR marked ready; pipeline events | `docs/STAGES.md`, trigger config in `docs/RUNBOOK.md` |
+| G4 orchestration | no cron; bots cannot trigger | one human action; Work item Created → Triage; Merge request Created → Release Captain; no status chain required | `docs/STAGES.md`, trigger config in `docs/FLOW_REGISTRATION.md` |
 | G5 accountability | policies live outside the repo | versioned contract + `evidence/canary.json` + `evidence/REPORT.md` | `govern:report` CI job; evidence artifact |
 | G6 security of external agents | no prompt scanning, limited isolation | native custom flows only | flow sources use no external agent |
 
@@ -124,7 +125,7 @@ and read by the agents (soft gate), with a JSON evidence pack per run.
 
 | Check | Result | Where |
 | --- | --- | --- |
-| Unit + contract tests | **15 passed** | `pytest -q` |
+| Unit + contract tests | **16 passed** | `pytest -q` |
 | Policy: healthy deploy | allow, exit 0 | `policy/check.py` |
 | Policy: 60% error rate | deny, exit 2, reason `error_budget` | `policy/check.py` |
 | Policy: merge during freeze | deny, exit 2, reason `freeze_window` | `policy/check.py` |

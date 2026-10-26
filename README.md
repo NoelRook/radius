@@ -42,20 +42,16 @@ human creates ONE work item
         │
         ▼  trigger: work item created
 ┌───────────────────────┐
-│ Triage & Plan         │  reads autonomy.yaml, writes a bounded plan
-└──────────┬────────────┘  completion: set status "Ready for dev"
-           ▼  trigger: work item status changed
+│ Triage & Plan         │  reads autonomy.yaml, writes the change,
+└──────────┬────────────┘  opens branch + merge request, posts the plan
+           ▼  trigger: merge request created
 ┌───────────────────────┐
-│ Developer Flow        │  branch → code → tests → merge request
-└──────────┬────────────┘  completion: mark MR ready
-           ▼  trigger: MR marked ready
-┌───────────────────────┐
-│ Release Captain       │  policy check → auto-merge → watch pipeline
-└──────────┬────────────┘  reads canary evidence, reports promote/rollback
+│ Release Captain       │  policy check → merge via Git credential
+└──────────┬────────────┘  → watch pipeline → read canary evidence
            ▼  pipeline
  plan → create → verify → secure → package → release → configure → monitor → govern
                                               │            │
-                                              │            ├─ canary 25% traffic
+                                              │            ├─ canary against the stable revision
                                               │            ├─ error/latency budget
                                               │            └─ rollback + /health proof
                                               ▼
@@ -179,7 +175,7 @@ No external services, no cloud account, no credentials.
 
 The flow YAML in `.gitlab/duo/flows/` is the source of truth, but GitLab
 requires custom flows to be created in the UI (Maintainer/Owner). Exact steps,
-trigger configuration and the chain-trigger setup are in
+trigger configuration and the two-trigger setup are in
 [`docs/FLOW_REGISTRATION.md`](docs/FLOW_REGISTRATION.md), with the full operating
 runbook in [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
