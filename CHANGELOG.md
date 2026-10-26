@@ -24,3 +24,6 @@
 - Replace the package publish `curl` call with Python `urllib`; `python:3.12-slim`
   does not ship curl, which was the only remaining failed job in pipeline
   2988331385.
+- Restrict the triage flow to tools available in ambient flows and use the
+  documented `get_job_logs` tool, with a log-based fallback if artifact download
+  is unavailable.

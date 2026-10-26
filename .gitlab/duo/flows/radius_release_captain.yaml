@@ -19,7 +19,7 @@ components:
       - "get_work_item"
       - "create_work_item_note"
       - "get_pipeline_failing_jobs"
-      - "get_logs_from_job"
+      - "get_job_logs"
       - "get_repository_file"
     ui_log_events:
       - "on_agent_final_answer"
@@ -73,7 +73,7 @@ prompts:
 
         6. If the pipeline failed, get the failing jobs with
            get_pipeline_failing_jobs, read the most relevant log with
-           get_logs_from_job, post a comment titled `## Radius release gate`
+           get_job_logs, post a comment titled `## Radius release gate`
            with `Decision: PIPELINE FAILED`, the job names and the first
            actionable error line. Stop.
 

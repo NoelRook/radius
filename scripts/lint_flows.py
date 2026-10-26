@@ -38,6 +38,7 @@ KNOWN_TOOLS = {
     "find_files",
     "get_issue",
     "get_logs_from_job",
+    "get_job_logs",
     "get_pipeline_failing_jobs",
     "get_repository_file",
     "get_work_item",
